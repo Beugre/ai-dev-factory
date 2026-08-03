@@ -1,0 +1,57 @@
+name: E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ["apps/web/**", "packages/adf/**", ".github/workflows/e2e.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      AGENT_RUNTIME: mock
+      NOTIFICATION_GATEWAY: mock
+      DEPLOYMENT_MODE: mock
+      DATABASE_URL: sqlite+aiosqlite:///./e2e.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e "./packages/adf[dev]"
+      - name: Seed demo project
+        run: python -m adf.cli seed
+        working-directory: packages/adf
+      - name: Start API
+        run: |
+          uvicorn adf.api.app:app --host 0.0.0.0 --port 8000 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8000/health && break; sleep 1; done
+        working-directory: packages/adf
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install web deps
+        run: npm ci || npm install
+        working-directory: apps/web
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - name: Build & preview web
+        run: |
+          npm run build
+          npm run preview -- --port 5173 &
+          for i in $(seq 1 30); do curl -sf http://localhost:5173 && break; sleep 1; done
+        working-directory: apps/web
+        env:
+          VITE_API_BASE_URL: http://localhost:8000
+      - name: Run Playwright
+        run: npm run test:e2e
+        working-directory: apps/web
+        env:
+          E2E_BASE_URL: http://localhost:5173

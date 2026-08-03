@@ -1,0 +1,7 @@
+# Toute modification requiert une revue humaine du propriétaire.
+* @owner
+
+# Zones sensibles : sécurité et CI.
+/.github/workflows/ @owner
+/SECURITY.md @owner
+/docs/security/ @owner

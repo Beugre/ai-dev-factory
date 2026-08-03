@@ -1,0 +1,39 @@
+# Test stack: ephemeral Postgres + Redis used by integration tests.
+services:
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: adf
+      POSTGRES_PASSWORD: adf
+      POSTGRES_DB: adf_test
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adf"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  redis-test:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+
+  tests:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://adf:adf@db-test:5432/adf_test
+      REDIS_URL: redis://redis-test:6379/0
+      AGENT_RUNTIME: mock
+      NOTIFICATION_GATEWAY: mock
+      DEPLOYMENT_MODE: mock
+    command: ["pytest", "-q"]
+    depends_on:
+      db-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_started

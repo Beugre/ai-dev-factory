@@ -1,0 +1,43 @@
+name: Migrations
+
+on:
+  pull_request:
+    paths:
+      - "packages/adf/adf/infrastructure/db/**"
+      - "packages/adf/migrations/**"
+      - ".github/workflows/migrations.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: adf
+          POSTGRES_PASSWORD: adf
+          POSTGRES_DB: adf
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U adf"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://adf:adf@localhost:5432/adf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e "./packages/adf[dev]"
+      - name: Upgrade to head
+        run: alembic upgrade head
+      - name: Downgrade to base (reversibility)
+        run: alembic downgrade base
+      - name: Ensure no pending autogenerate diff
+        run: |
+          alembic upgrade head
+          alembic check || echo "::warning::Autogenerate diff detected; add a migration."

@@ -1,0 +1,51 @@
+{
+  "name": "ADF - Discord notification relay",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "adf-notify",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-in",
+      "name": "Webhook (from ADF)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return items.map(i => ({ json: { content: `**${i.json.title}**\\n${i.json.body}` } }));"
+      },
+      "id": "format",
+      "name": "Format message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [520, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.DISCORD_WEBHOOK_URL}}",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "content", "value": "={{$json[\"content\"]}}" }]
+        }
+      },
+      "id": "discord-out",
+      "name": "Post to Discord",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [780, 300]
+    }
+  ],
+  "connections": {
+    "Webhook (from ADF)": { "main": [[{ "node": "Format message", "type": "main", "index": 0 }]] },
+    "Format message": { "main": [[{ "node": "Post to Discord", "type": "main", "index": 0 }]] }
+  },
+  "settings": {},
+  "meta": {
+    "description": "Optional relay: ADF backend POSTs a notification, n8n forwards it to Discord. The backend remains the source of truth; this is a convenience integration only."
+  }
+}

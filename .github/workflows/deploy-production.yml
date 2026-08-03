@@ -1,0 +1,37 @@
+# PRODUCTION — DÉSACTIVÉ PAR DÉFAUT.
+#
+# La production nécessite TOUJOURS une validation humaine explicite.
+# Ce workflow ne se déclenche que manuellement (workflow_dispatch) ET est
+# protégé par l'environnement GitHub `production` qui doit exiger une approbation
+# (Settings > Environments > production > Required reviewers).
+#
+# Pour l'activer : configurer l'environnement `production` avec des reviewers,
+# puis retirer le garde-fou `if:` ci-dessous.
+name: Deploy production (disabled)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Taper 'DEPLOY' pour confirmer"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    # Garde-fou explicite : empêche toute exécution tant que non activé.
+    if: ${{ vars.PRODUCTION_ENABLED == 'true' && inputs.confirm == 'DEPLOY' }}
+    environment: production # exige une approbation humaine (required reviewers)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Human-approved production deployment
+        run: |
+          echo "Déploiement production approuvé par un humain via l'environnement protégé."
+          echo "Brancher ici l'appel réel au fournisseur de déploiement."

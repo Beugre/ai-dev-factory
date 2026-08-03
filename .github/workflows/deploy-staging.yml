@@ -1,0 +1,38 @@
+name: Deploy VPS (staging)
+
+# Déploiement automatique sur le VPS à chaque push sur main (staging).
+# Production : workflow séparé avec validation humaine obligatoire.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            cd /opt/ai-dev-factory
+            bash infra/scripts/deploy.sh
+
+      - name: Update GitHub webhook URL
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          echo "Webhook actif sur http://${VPS_HOST}/api/v1/webhooks/github"
