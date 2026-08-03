@@ -8,6 +8,7 @@ import { Approvals } from '@/pages/Approvals';
 import { AgentRuns } from '@/pages/AgentRuns';
 import { PullRequests } from '@/pages/PullRequests';
 import { Settings } from '@/pages/Settings';
+import { Projects } from '@/pages/Projects';
 
 const router = createBrowserRouter([
     {
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <Dashboard /> },
             { path: 'new', element: <NewRequest /> },
+            { path: 'projects', element: <Projects /> },
             { path: 'features/:id', element: <FeatureDetail /> },
             { path: 'backlog', element: <Backlog /> },
             { path: 'approvals', element: <Approvals /> },

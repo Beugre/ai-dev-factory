@@ -4,6 +4,7 @@ const NAV = [
     { to: '/', label: 'Accueil', icon: '🏠' },
     { to: '/backlog', label: 'Backlog', icon: '🗂️' },
     { to: '/new', label: 'Créer', icon: '➕' },
+    { to: '/projects', label: 'Projets', icon: '📦' },
     { to: '/approvals', label: 'Validations', icon: '✅' },
     { to: '/settings', label: 'Réglages', icon: '⚙️' },
 ];

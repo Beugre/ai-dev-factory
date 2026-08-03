@@ -104,6 +104,22 @@ export function useCreateFeature() {
     });
 }
 
+export function useCreateProject() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (payload: {
+            name: string;
+            slug: string;
+            github_owner: string;
+            github_repo: string;
+            staging_url?: string;
+        }) => api.post<Project>('/projects', payload),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ['projects'] });
+        },
+    });
+}
+
 export function useAnswerQuestion(featureId: string) {
     const qc = useQueryClient();
     return useMutation({

@@ -88,15 +88,14 @@ services:
     build:
       context: .
       dockerfile: infra/docker/web.Dockerfile
+      args:
+        VITE_API_BASE_URL: ${API_PUBLIC_URL:-http://localhost:8000}
     restart: always
     ports:
       - "127.0.0.1:8080:80"
-    environment:
-      VITE_API_BASE_URL: ${API_PUBLIC_URL:-http://localhost:8000}
 
   # Note: nginx est géré par le système (nginx.service) sur ce VPS.
   # Voir infra/docker/nginx-site.conf pour la config du vhost.
-
 
 volumes:
   pgdata:
