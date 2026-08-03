@@ -16,18 +16,29 @@ logger = get_logger("adf.worker")
 
 async def run() -> None:
     settings = get_settings()
-    client = redis.from_url(settings.redis_url, decode_responses=True)
+    # socket_timeout doit être > blpop timeout pour éviter le TimeoutError socket.
+    client = redis.from_url(
+        settings.redis_url,
+        decode_responses=True,
+        socket_timeout=15,
+        socket_connect_timeout=10,
+    )
     logger.info("worker_started", queue=QUEUE_KEY)
     try:
         while True:
-            item = await client.blpop([QUEUE_KEY], timeout=5)
+            try:
+                item = await client.blpop([QUEUE_KEY], timeout=5)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("worker_redis_error", error=f"{type(exc).__name__}: {exc}")
+                await asyncio.sleep(2)
+                continue
             if item is None:
                 continue
             _, raw = item
             try:
                 result = await process_job(raw)
                 logger.info("worker_job_done", result=result)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 logger.error("worker_job_failed", error=f"{type(exc).__name__}: {exc}")
     finally:
         await client.aclose()  # type: ignore[attr-defined]
