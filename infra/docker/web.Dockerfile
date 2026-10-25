@@ -1,5 +1,5 @@
 # Frontend image: build the Vite app, serve with nginx.
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY apps/web/package.json apps/web/package-lock.json* ./
 RUN npm install
